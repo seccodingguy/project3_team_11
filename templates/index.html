@@ -1,0 +1,620 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Plot</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #ffffff;
+            border: 1px solid #dddddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .form-container h1 {
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-group-checkboxes {
+            margin-bottom: 20px;
+        }
+        .form-group-checkboxes label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .checkbox-group {
+            margin-bottom: 5px;
+        }
+        .submit-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .submit-btn:hover {
+            background-color: #0056b3;
+        }
+        .status-box {
+            width: 95%;
+            height: 300px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            overflow-y: scroll;
+            font-family: monospace;
+            white-space: pre-wrap;
+            background: #f9f9f9;
+        }
+        .processing {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--secondary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto 15px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #gallery {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .image-container {
+            margin: 10px;
+        }
+        .image-container img {
+            max-width: 800px;
+            max-height: 800px;
+        }
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(800px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .image-grid img {
+            width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        #show-images-btn {
+            padding: 10px 20px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #show-images-btn:hover {
+            background-color: #45a049;
+        }
+        .model-list {
+            margin-bottom: 20px;
+        }
+        .model-list a {
+            display: block;
+            margin: 5px 0;
+            color: blue;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .model-summary, .model-layers {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .model-summary {
+            font-family: monospace;
+        }
+        .model-layers table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .model-layers table th, .model-layers table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .model-layers table th {
+            background-color: #f2f2f2;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .left {
+            text-align: left;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .right {
+            text-align: right;
+        }
+    </style>
+    
+</head>
+<body>
+    <section>
+        <div class="form-container">
+            <h1>AI Agent Orchestrator Configuration</h1>
+            <section>
+                <!-- General Configuration -->
+                <div class="form-group">
+                    <label for="search_query">Search Query:</label>
+                    <input type="text" id="search_query" name="search_query" value="vinyl records and books">
+                </div>
+                <div class="form-group">
+                    <label for="download_dir">Download Directory:</label>
+                    <input type="text" id="download_dir" name="download_dir" value="data/train">
+                </div>
+                <!--<div class="form-group">
+                    <label for="validated_dir">Validated Directory:</label>
+                    <input type="text" id="validated_dir" name="validated_dir" value="data/validated">
+                </div>-->
+                <div class="form-group">
+                    <label for="train_dir">Train Directory:</label>
+                    <input type="text" id="train_dir" name="train_dir" value="data/train">
+                </div>
+                <!--<div class="form-group">
+                    <label for="validation_dir">Validation Directory:</label>
+                    <input type="text" id="validation_dir" name="validation_dir" value="data/validation">
+                </div>-->
+
+                <!-- Model Configuration -->
+                <div class="form-group">
+                    <label for="model_dir">Model Directory:</label>
+                    <input type="text" id="model_dir" name="model_dir" value="models/vinyl_book_model.keras">
+                </div>
+                <div class="form-group">
+                    <label for="model_name">Model Name:</label>
+                    <select id="model_name" name="model_name">
+                        <option value="mobilenet" selected>MobileNetV2</option>
+                        <option value="resnet">ResNet50</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="layers">Layers:</label>
+                    <input type="number" id="layers" name="layers" value="15">
+                </div>
+                <div class="form-group">
+                    <label for="confidence">Confidence:</label>
+                    <input type="number" id="confidence" name="confidence" step="0.01" value="0.7">
+                </div>
+
+                <!-- Training Configuration -->
+                <div class="form-group">
+                    <label for="folds">Folds:</label>
+                    <input type="number" id="folds" name="folds" value="12">
+                </div>
+                <div class="form-group">
+                    <label for="epocs">Epochs:</label>
+                    <input type="number" id="epocs" name="epocs" value="100">
+                </div>
+                <div class="form-group">
+                    <label for="use_saved_model">Use Saved Model:</label>
+                    <select id="use_saved_model" name="use_saved_model">
+                        <option value="True">True</option>
+                        <option value="False" selected>False</option>
+                    </select>
+                </div>
+
+                <!-- Directory Configuration -->
+                <div class="form-group">
+                    <label for="test_dir">Test Directory:</label>
+                    <input type="text" id="test_dir" name="test_dir" value="data/test">
+                </div>
+                <div class="form-group">
+                    <label for="prediction_dir">Prediction Directory:</label>
+                    <input type="text" id="prediction_dir" name="prediction_dir" value="data/predictions.json">
+                </div>
+                <div class="form-group">
+                    <label for="predict_dir">Predict Directory:</label>
+                    <input type="text" id="predict_dir" name="predict_dir" value="test_images">
+                </div>
+                <!--<div class="form-group">
+                    <label for="inventory_dir">Inventory Directory:</label>
+                    <input type="text" id="inventory_dir" name="inventory_dir" value="data/inventory">
+                </div>-->
+
+                <!-- Agents Configuration -->
+                <div class="form-group-checkboxes">
+                    <label>Agents:</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="download_images" name="download_images" value="True">
+                        <label for="download_images">Download Images</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="validate_images" name="validate_images" value="True">
+                        <label for="validate_images">Validate Images</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="train_model" name="train_model" value="True" checked>
+                        <label for="train_model">Train Model</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="predict_images" name="predict_images" value="True" checked>
+                        <label for="predict_images">Predict Images</label>
+                    </div>
+                    <!--<div class="checkbox-group">
+                        <input type="checkbox" id="create_inventory" name="create_inventory" value="True" disabled>
+                        <label for="create_inventory">Create Inventory [FUTURE ENHANCEMENT]</label>
+                    </div>-->
+                </div>
+
+                <button class="submit-btn" id="analyze-button">Submit</button>
+            </section>
+
+            <div class="processing" id="processing-indicator">
+                <div class="loader"></div>
+                <p>Our AI agents are working...</p>
+            </div>
+            <section id="orchestrator-results">
+                {% if result %}
+                    <h2>Result:</h2>
+                    <p>{{ result }}</p>
+                {% endif %}
+            </section>
+        </div>
+    </section>
+    <section id="status_messages">
+        <h1>Status Messages</h1>
+
+        <table style="table-layout: fixed ; width: 100%;">
+            <tr><th class="center">Agents</th><th class="center">Model</th></tr>
+            <tr>
+                <td><!-- Textbox to display real-time messages -->
+                    <div class="status-box" id="agent-status-box">
+                    </div></td>
+                <td>
+                    <!-- Textbox to display real-time messages -->
+                    <div class="status-box" id="status-box">
+                    </div></td>
+            </tr>
+        </table>
+        <table style="table-layout: fixed ; width: 100%;">
+            <tr><th>Results</th></tr>
+            <tr><td>
+                <!-- Textbox to display real-time messages -->
+                <div class="status-box" id="results-status-box">
+                </div></td>
+            </td></tr>
+            <tr><td>
+                <!-- Show Images Button -->
+                <button class="submit-btn" id="show-images-btn">Show Images</button>
+
+                <!-- Container for dynamically loaded images -->
+                <div class="image-grid" id="image-grid"></div>
+            </td></tr>
+        </table>
+    </section>
+    <section>
+        <h1>Keras Model Viewer</h1>
+
+    <!-- Container for the list of models -->
+    <div class="model-list" id="model-list">
+        <h2>Available Models</h2>
+    </div>
+
+    <!-- Container for the model summary -->
+    <div class="model-summary" id="model-summary">
+        <h2>Model Summary</h2>
+        <pre id="summary-content">Click on a model to view its summary.</pre>
+    </div>
+
+    <!-- Container for the model layers -->
+    <div class="model-layers" id="model-layers">
+        <h2>Model Layers</h2>
+        <table id="layers-table">
+            <thead>
+                <tr>
+                    <th>Layer Name</th>
+                    <th>Layer Type</th>
+                    <th>Output Shape</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Layer rows will be dynamically added here -->
+            </tbody>
+        </table>
+    </div>
+    <!-- Show Images Button -->
+    <button class="submit-btn" id="refresh-models-list">Show Models</button>
+    </section>
+    <script>
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const processingIndicator = document.getElementById('processing-indicator');
+            const analyzeButton = document.getElementById('analyze-button');
+            // Add a click event listener to the "Show Images" button
+            const imagesButton = document.getElementById('show-images-btn');
+            const refreshModelsButton = document.getElementById('refresh-models-list');
+            
+            refreshModelsButton.addEventListener('click', async function() {
+                try {
+                    const response = await fetch('/api/models');
+                    const data = await response.json();
+    
+                    if (data.error) {
+                        console.error("Error fetching models:", data.error);
+                        return;
+                    }
+    
+                    const modelList = document.getElementById('model-list');
+
+                    // Clear any existing links
+                    modelList.innerHTML = '<h2>Available Models</h2>';
+    
+                    // Create a link for each model
+                    data.models.forEach(model => {
+                        const link = document.createElement('a');
+                        link.textContent = model;
+                        link.href = '#';
+                        //link.id = 'model-link';
+                        link.onclick = () => fetchModelInfo(model);
+                        modelList.appendChild(link);
+                    });
+                } catch (error) {
+                    console.error("Error fetching model list:", error);
+                }
+            
+            });
+
+            // Function to dynamically load images
+            imagesButton.addEventListener('click', async function() {
+                try {
+                    // Fetch the list of images from the server
+                    const response = await fetch('/api/images');
+                    const data = await response.json();
+
+                    if (data.error) {
+                        console.error("Error fetching images:", data.error);
+                        alert(data.error);
+                        return;
+                    }
+
+                    // Get the image container
+                    const imageGrid = document.getElementById('image-grid');
+
+                    // Clear the container before adding new images (optional)
+                    imageGrid.innerHTML = '';
+
+                    // Loop through the image filenames and create <img> elements
+                    data.images.forEach(filename => {
+                        const img = document.createElement('img');
+                        img.src = `images/${filename}`; // Construct the image URL
+                        img.alt = filename;
+                        imageGrid.appendChild(img);
+                    });
+                } catch (error) {
+                    console.error("Error loading images:", error);
+                }
+            });
+
+            analyzeButton.addEventListener('click', async function() {
+                
+                const searchQuery = document.getElementById('search_query').value.trim();
+                const downloadDir = document.getElementById('download_dir').value.trim();
+                //const validatedDir = document.getElementById('validated_dir').value.trim();
+                const trainDir = document.getElementById('train_dir').value.trim();
+                //const validationDir = document.getElementById('validation_dir').value.trim();
+                const predictDir = document.getElementById('predict_dir').value.trim();
+                const predictionDir = document.getElementById('prediction_dir').value.trim();
+                const modelDir = document.getElementById('model_dir').value.trim();
+                const modelName = document.getElementById('model_name').value.trim();
+                const layers = document.getElementById('layers').value.trim();
+                const confidence = document.getElementById('confidence').value.trim();
+                const folds = document.getElementById('folds').value.trim();
+                const epocs = document.getElementById('epocs').value.trim();
+                const testDir = document.getElementById('test_dir').value.trim();
+                //const inventoryDir = document.getElementById('inventory_dir').value.trim();
+                
+                const savedModel = document.getElementById('use_saved_model').value.trim(); 
+                const downloadImages = document.getElementById('download_images').checked;
+                const validateImages = document.getElementById('validate_images').checked;
+                const trainImages = document.getElementById('train_model').checked;
+                const predictImages = document.getElementById('predict_images').checked;
+                //const createInventory = document.getElementById('create_inventory').checked;
+                
+                // Show processing indicator
+                processingIndicator.style.display = 'block';
+                
+                try {
+                    // Call the backend API
+                    let body_vals = {
+                        'search_query': searchQuery,
+                        'download_dir': downloadDir,
+                        //'validated_dir': validatedDir,
+                        'train_dir': trainDir,
+                        //'validation_dir': validationDir,
+                        'model_dir': modelDir,
+                        'test_dir': testDir,
+                        'prediction_dir': predictDir,
+                        'model_name': modelName,
+                        //'inventory_dir': inventoryDir,
+                        'layers': layers,
+                        'confidence': confidence,
+                        'folds': folds,
+                        'epocs': epocs,
+                        'use_saved_model': savedModel,
+                        'predict_dir': predictDir,
+                        'download_images': downloadImages,
+                        'validate_images': validateImages,
+                        'train_model': trainImages,
+                        'predict_images': predictImages,
+                        //'create_inventory': createInventory 
+                    }
+                    
+                    const response = await fetch('/submit', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(body_vals)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Server error occurred');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    
+                } finally {
+                    processingIndicator.style.display = 'none';
+                }
+            });
+
+        });
+
+        // Connect to the SocketIO server
+        const socket = io('http://127.0.0.1:5000', {
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+        });
+        
+        // Listen for 'status_message' events
+        socket.on('status_message', (data) => {
+            if (data && data.message) {
+                const statusBox = document.getElementById('status-box');
+                statusBox.textContent += data.message + '\n';
+                // Auto-scroll to the bottom
+                statusBox.scrollTop = statusBox.scrollHeight;
+            } else {
+                console.warn('Invalid data received:', data);
+            }
+        });
+
+        // Listen for 'agent_status' events
+        socket.on('agent_status', (data) => {
+            if (data && data.message) {
+                const statusBox = document.getElementById('agent-status-box');
+                statusBox.textContent += data.message + '\n';
+                // Auto-scroll to the bottom
+                statusBox.scrollTop = statusBox.scrollHeight;
+            } else {
+                console.warn('Invalid data received:', data);
+            }
+        });
+
+        // Listen for 'agent_status' events
+        socket.on('results_status', (data) => {
+            if (data && data.message) {
+                const statusBox = document.getElementById('results-status-box');
+                statusBox.textContent += data.message + '\n';
+                // Auto-scroll to the bottom
+                statusBox.scrollTop = statusBox.scrollHeight;
+            } else {
+                console.warn('Invalid data received:', data);
+            }
+        });
+
+        // Fetch the model summary and layers for the selected model
+        async function fetchModelInfo(modelFilename) {
+            try {
+                
+                const response = await fetch('/api/model-info', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ model_filename: modelFilename }),
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    console.error("Error fetching model info:", data.error);
+                    return;
+                }
+
+                const modelSummaryTitle = document.getElementById('model-summary').querySelector('h2');
+                modelSummaryTitle.textContent = modelFilename + " Summary"
+
+                const modelLayersTitle = document.getElementById('model-layers').querySelector('h2');
+                modelLayersTitle.textContent = modelFilename + " Layers"
+                
+                // Update the model summary
+                const summaryContent = document.getElementById('summary-content');
+                summaryContent.textContent = data.summary;
+
+                // Update the model layers table
+                const layersTableBody = document.getElementById('layers-table').querySelector('tbody');
+                layersTableBody.innerHTML = ''; // Clear existing rows
+
+                
+
+                data.layers.forEach(layer => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${layer.name}</td>
+                        <td>${layer.type}</td>
+                        <td>${JSON.stringify(layer.output_shape)}</td>
+                    `;
+                    layersTableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Error fetching model info:", error);
+            }
+        }
+
+    </script>
+</body>
+</html>

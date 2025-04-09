@@ -1467,12 +1467,22 @@ if __name__ == "__main__":
                                            compile=False)
         
         # Recompile the model to ensure XLA optimization is enabled for shared memory usage
-        model.compile(
-            optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
-            loss='categorical_crossentropy',
-            metrics=['accuracy'],
-            jit_compile=True  # Enable XLA optimization for shared memory
-        )
+        try:
+            model.compile(
+                optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+                loss='categorical_crossentropy',
+                metrics=['accuracy'],
+                jit_compile=True  # Enable XLA optimization for shared memory
+            )
+        except:
+            model.compile(
+                optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+                loss='categorical_crossentropy',
+                metrics=['accuracy'],
+                jit_compile=False  # Disable XLA optimization for shared memory
+            )
+            msg = f"Error with XLA - disabling jit compile."
+            print(msg)
         
         files = [os.path.join(train_dir, f) for f in os.listdir(train_dir) if os.path.isfile(os.path.join(train_dir, f)) and
                  f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff'))]

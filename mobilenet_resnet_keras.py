@@ -907,15 +907,25 @@ def train_model(model, data_dir, epochs=15, batch_size=16, k_folds=5, use_xla=Tr
         # Add any additional callbacks
         if callbacks:
             fold_callbacks.extend(callbacks)
-        
-        # Train the model
-        fold_history = fold_model.fit(
-            train_generator,
-            epochs=epochs,
-            validation_data=val_generator,
-            callbacks=fold_callbacks,
-            verbose=verbose
-        )
+        try:
+            # Train the model
+            fold_history = fold_model.fit(
+                train_generator,
+                epochs=epochs,
+                validation_data=val_generator,
+                callbacks=fold_callbacks,
+                verbose=verbose
+            )
+        except:
+            fold_history = fold_model.fit(
+                train_generator,
+                epochs=epochs,
+                validation_data=val_generator,
+                callbacks=fold_callbacks,
+                verbose=verbose,
+                jit_compile=False
+            )
+            
         
         # Evaluate on this fold's validation data
         val_scores = fold_model.evaluate(val_generator, verbose=0)

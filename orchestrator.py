@@ -38,8 +38,9 @@ class Orchestrator:
         #os.makedirs(self._validation_dir, exist_ok=True)
         os.makedirs(self._test_images_dir, exist_ok=True)
         socket_io = socketio.Client()
-        socket_io.connect('http://127.0.0.1:5000')  # Replace with your server's address
+        
         try:
+            socket_io.connect('http://127.0.0.1:5000')
             socket_io.emit('agent_status', {'message': "Pipeline execution started."})
             time.sleep(1)
         except Exception as e:

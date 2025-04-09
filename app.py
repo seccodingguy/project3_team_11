@@ -83,26 +83,6 @@ def list_models():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/download-model', methods=['GET'])
-def download_model():
-    """
-    Serve the requested model file for download.
-    """
-    try:
-        # Get the model filename from the query parameter
-        model_filename = request.args.get('model_filename')
-        if not model_filename:
-            return jsonify({'error': 'Model filename is required.'}), 400
-
-        # Ensure the model file exists
-        if not os.path.exists(os.path.join(MODEL_DIR, model_filename)):
-            return jsonify({'error': 'Model file not found.'}), 404
-
-        # Serve the model file for download
-        return send_from_directory(MODEL_DIR, model_filename, as_attachment=True)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 @app.route('/api/model-info', methods=['POST'])
 def get_model_info():
     """

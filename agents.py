@@ -99,19 +99,4 @@ class Agents:
             print(msg)
             
             
-    def job_search(self,query, location, num_of_results=20):
-        msg=f"Agent 6: searching open jobs using '{query}' in location '{location}' returning '{num_of_results}' results..."
-        print(msg)
-       
-        try:
-            subprocess.run(
-                ["python", "job_search.py", query, location, num_of_results],
-                check=True
-            )
-            msg="Agent 6: Job search created successfully."
-            print(msg)
-            
-        except subprocess.CalledProcessError as e:
-            msg=f"Agent 6: Error searching jobs: {e}"
-            print(msg)
            

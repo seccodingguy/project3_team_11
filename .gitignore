@@ -9,7 +9,6 @@ __pycache__/
 
 # Model files
 models/
-plots/
 *.keras
 *.h5
 *.tf
@@ -38,7 +37,6 @@ test_tube_exp/
 tests/tests_tt_dir/
 tests/save_dir
 default/   
-data/
 test_tube_logs/
 test_tube_data/
 datasets/

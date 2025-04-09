@@ -28,6 +28,7 @@ class Orchestrator:
         self._predict_dir = config_settings['predict_dir']
         self._folds = config_settings['folds']
         self._epocs = config_settings['epocs']
+        self._use_xla = bool(config_settings['use_xla'])
         
            
     def orchestrate_pipeline(self):
@@ -72,7 +73,7 @@ class Orchestrator:
                 time.sleep(1)
             agents_obj.train_model(self._train_dir, self._model_to_use, 
                                folds=self._folds, layers=self._number_of_layers, epocs=self._epocs, 
-                               confidence=self._confidence)
+                               confidence=self._confidence,use_xla=self._use_xla)
 
         if self._predict_images:
             # Step: Predict image classes

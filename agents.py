@@ -42,7 +42,7 @@ class Agents:
             print(msg)
             
             
-    def train_model(self,train_dir, model_name, socketio='http://127.0.0.1:5000', folds=3, layers=5, epocs=25, confidence=0.75):
+    def train_model(self,train_dir, model_name, socketio='http://127.0.0.1:5000', folds=3, layers=5, epocs=25, confidence=0.75, use_xla=True):
         msg=f"Agent 3: Training model with data from '{train_dir}'..."
         print(msg)
                
@@ -50,7 +50,7 @@ class Agents:
             training_process = subprocess.run(
                 ["python", "mobilenet_resnet_keras.py", '--dir_data', train_dir, '--model', model_name, 
                  '--folds', str(folds),'--layers',str(layers),'--epocs',str(epocs),
-                 '--confidence',str(confidence)]
+                 '--confidence',str(confidence), '--use_xla',str(use_xla)]
             )
             # Wait for the process to complete
             #stdout, stderr = training_process.communicate()
@@ -61,14 +61,14 @@ class Agents:
             msg=f"Agent 3: Error training model: {e}"
             print(msg)
             
-    def predict_images(self,image_dir, model_name, confidence, socketio='http://127.0.0.1:5000'):
+    def predict_images(self,image_dir, model_name, confidence, socketio='http://127.0.0.1:5000',use_xla):
         msg=f"Agent 4: Predicting images in directory '{image_dir}' using model '{model_name}'..."
         print(msg)
         
         try:
             predict_process = subprocess.run(
                 ["python", "mobilenet_resnet_keras.py", '--dir_data', image_dir, '--model', model_name, 
-                 '--use_saved_model', str(True), '--confidence', str(confidence)]
+                 '--use_saved_model', str(True), '--confidence', str(confidence), '--use_xla',str(use_xla)]
             )
             # Wait for the process to complete
             # stdout, stderr = predict_process.communicate()

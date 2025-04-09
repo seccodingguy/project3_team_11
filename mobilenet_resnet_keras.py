@@ -907,25 +907,15 @@ def train_model(model, data_dir, epochs=15, batch_size=16, k_folds=5, use_xla=Tr
         # Add any additional callbacks
         if callbacks:
             fold_callbacks.extend(callbacks)
-        try:
-            # Train the model
-            fold_history = fold_model.fit(
-                train_generator,
-                epochs=epochs,
-                validation_data=val_generator,
-                callbacks=fold_callbacks,
-                verbose=verbose
-            )
-        except:
-            fold_history = fold_model.fit(
-                train_generator,
-                epochs=epochs,
-                validation_data=val_generator,
-                callbacks=fold_callbacks,
-                verbose=verbose,
-                jit_compile=False
-            )
-            
+        
+        # Train the model
+        fold_history = fold_model.fit(
+            train_generator,
+            epochs=epochs,
+            validation_data=val_generator,
+            callbacks=fold_callbacks,
+            verbose=verbose
+        )
         
         # Evaluate on this fold's validation data
         val_scores = fold_model.evaluate(val_generator, verbose=0)
@@ -1433,7 +1423,7 @@ if __name__ == "__main__":
     parser.add_argument('--use_saved_model', default=False, help='Use the saved model to predict images.')
     parser.add_argument('--model_path', default='vinyl_book_classifier_v2.keras', help="Path to the saved model.")
     parser.add_argument('--socketio', default='http://127.0.0.1:5000', help="Socket to send responses to.")
-    
+    parser.add_argument('--use_xla', default='True', help="Use XLA for GPU and multi-core processing.")
     
     args = parser.parse_args()
     
@@ -1457,6 +1447,7 @@ if __name__ == "__main__":
     layers = int(args.layers)
     epocs = int(args.epocs)
     use_saved_model = bool(args.use_saved_model)
+    use_xla = bool(args.use_xla)
     
      # Adjust batch size for better shared memory utilization
     optimal_batch_size = 8  # Default value, will be adjusted based on GPU
@@ -1488,20 +1479,25 @@ if __name__ == "__main__":
             model.compile(
                 optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
                 loss='categorical_crossentropy',
-                metrics=['accuracy'],
-                jit_compile=False  # Disable XLA optimization for shared memory
+                metrics=['accuracy']
             )
             msg = f"Error with XLA - disabling jit compile."
             print(msg)
+            send_status_message(msg)
         
-        files = [os.path.join(train_dir, f) for f in os.listdir(train_dir) if os.path.isfile(os.path.join(train_dir, f)) and
-                 f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff'))]
+        #files = [os.path.join(train_dir, f) for f in os.listdir(train_dir) if os.path.isfile(os.path.join(train_dir, f)) and
+        #            f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff'))]
         
-        print(f"Files list: {files}")
+        #print(f"Files list: {files}")
         
-        prediction_results = predict_batch(model, files, confidence_threshold=confidence,batch_size=optimal_batch_size)
+        #prediction_results = predict_batch(model, files, confidence_threshold=confidence,batch_size=optimal_batch_size)
+        prediction_results, confidence_results = predict_image(model,train_dir,use_xla=use_xla,confidence_threshold=confidence)
         send_status_message("*** PREDICTION RESULTS ***",reciever='results_status')
         send_status_message(json.dumps(prediction_results),reciever='results_status')
+        send_status_message(json.dumps(confidence_results),reciever='results_status')
+        print("*** PREDICTION RESULTS ***")
+        print(prediction_results)
+        print(confidence_results)
     else:
         print("Training new model with 2 classes (book, vinyl)...")
         # Check if we have data in all required folders
@@ -1530,7 +1526,8 @@ if __name__ == "__main__":
         if all_dirs_have_data:
             # Create and train the model
             training_results = train_model(
-                model_name, train_dir, epochs=epocs, batch_size=optimal_batch_size, layers=layers,k_folds=folds)
+                model_name, train_dir, epochs=epocs, batch_size=optimal_batch_size, layers=layers,
+                k_folds=folds,use_xla=use_xla)
 
             # Save the model
             training_results['final_model'].save(model_path)  # Using .keras format

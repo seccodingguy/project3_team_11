@@ -652,7 +652,7 @@ def augment(image, label):
     image = tf.clip_by_value(image, -1.0, 1.0)
     return image, label
 
-# Example progress tracking callback
+# Progress tracking callback
 class TrainingProgressCallback(tf.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         logs = logs or {}
@@ -1079,6 +1079,7 @@ def train_model(model, data_dir, epochs=15, batch_size=16, k_folds=5, use_xla=Tr
         
         # Save the best cross-validation model
         best_model_path = os.path.join(models_dir, f"best_cv_{model}_{layers}_{timestamp}.keras")
+        best_fold_model.save(best_model_path)
         best_model_path = os.path.join(models_dir, f"best_cv_{model}_{layers}_{timestamp}.h5")
         best_fold_model.save(best_model_path)
         msg = f"Best CV model saved to {best_model_path}"
@@ -1087,6 +1088,7 @@ def train_model(model, data_dir, epochs=15, batch_size=16, k_folds=5, use_xla=Tr
         
         # Save the final model trained on all data
         final_model_path = os.path.join(models_dir, f"final_{model}_{layers}_{timestamp}.keras")
+        final_model.save(final_model_path)
         final_model_path = os.path.join(models_dir, f"final_{model}_{layers}_{timestamp}.h5")
         final_model.save(final_model_path)
         msg = f"Final model saved to {final_model_path}"
@@ -1269,7 +1271,7 @@ def predict_image(model, image_path, class_names = ['book','vinyl'], use_xla=Tru
 def predict_batch(model, images, confidence_threshold=0.70, batch_size=16):
     """Predict a batch of images using GPU shared memory optimization"""
     results = []
-    current_time = datetime.now().time()
+    current_time = time.time()
     
     for i in range(0, len(images), batch_size):
         batch_paths = images[i:i+batch_size]
@@ -1335,18 +1337,23 @@ def benchmark_gpu_performance(model, img_paths, runs=5, batch_sizes=[1, 4, 8, 16
     if not img_paths:
         print("No images provided for benchmarking")
         return
+    
+    current_time = time.time()
+    filetxt = ""
 
     # Limit to first 100 images for benchmarking
     test_paths = img_paths[:100] if len(img_paths) > 100 else img_paths
 
     print("\n=== GPU SHARED MEMORY PERFORMANCE BENCHMARK ===")
+    filetxt = f"{filetxt}\n=== GPU SHARED MEMORY PERFORMANCE BENCHMARK ==="
     print(
         f"Testing with {len(test_paths)} images, {runs} runs per configuration")
-
+    filetxt = f"{filetxt}Testing with {len(test_paths)} images, {runs} runs per configuration"
     results = {}
 
     # Test individual image processing (no shared memory benefit)
     print("\nBenchmarking individual image processing (baseline)...")
+    filetxt = f"{filetxt}\nBenchmarking individual image processing (baseline)..."
     start_time = time.time()
     for _ in range(runs):
         for path in test_paths[:10]:  # Limit to 10 images for individual processing
@@ -1354,22 +1361,26 @@ def benchmark_gpu_performance(model, img_paths, runs=5, batch_sizes=[1, 4, 8, 16
     individual_time = (time.time() - start_time) / (10 * runs)
     print(
         f"Average time per image (individual): {individual_time*1000:.2f} ms")
+    filetxt = f"{filetxt}Average time per image (individual): {individual_time*1000:.2f} ms"
     results['individual'] = individual_time * 1000
 
     # Test batch processing with different batch sizes
     for batch_size in batch_sizes:
         print(f"\nBenchmarking batch size {batch_size}...")
+        filetxt = f"{filetxt}\nBenchmarking batch size {batch_size}..."
         start_time = time.time()
         for _ in range(runs):
             _ = predict_batch(model, test_paths, batch_size=batch_size)
         batch_time = (time.time() - start_time) / (len(test_paths) * runs)
         print(
             f"Average time per image (batch size {batch_size}): {batch_time*1000:.2f} ms")
+        filetxt = f"{filetxt}Average time per image (batch size {batch_size}): {batch_time*1000:.2f} ms"
         results[f'batch_{batch_size}'] = batch_time * 1000
 
         # Calculate speedup
         speedup = individual_time / batch_time
         print(f"Speedup with batch size {batch_size}: {speedup:.2f}x")
+        filetxt = f"{filetxt}Speedup with batch size {batch_size}: {speedup:.2f}x"
         results[f'speedup_{batch_size}'] = speedup
 
     # Find the best batch size
@@ -1383,7 +1394,17 @@ def benchmark_gpu_performance(model, img_paths, runs=5, batch_sizes=[1, 4, 8, 16
 
     print(
         f"\nBest performance with batch size {best_batch_size}: {best_speedup:.2f}x speedup")
+    filetxt = f"{filetxt}\nBest performance with batch size {best_batch_size}: {best_speedup:.2f}x speedup"
     print("Larger batch sizes benefit more from GPU shared memory optimization")
+    filetxt = f"{filetxt}Larger batch sizes benefit more from GPU shared memory optimization"
+    
+    with open(f'prediction_results_{current_time}.txt', 'w') as file:
+        file.write(filetxt)
+        file.write("\nRaw Data")
+        file.write("\n***************************\n")
+        file.write(f"\nResults:\n\t{results}")
+        file.write(f"\n\nBest Batch Size:\n\t{best_batch_size}")
+        file.write("\n***************************\n")
 
     return results, best_batch_size
 

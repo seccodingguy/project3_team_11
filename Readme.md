@@ -87,6 +87,9 @@ pip install -r requirements.txt
 3. Modify any settings (or keep the default values)
 4. Make sure all checkboxes are checked
 
+#### Explanation of Configurations
+![alt text](image.png)
+
 ## Model Architecture
 
 The code provides two model architectures:

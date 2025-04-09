@@ -1,0 +1,4 @@
+
+Prediction results:
+	[{'path': 'test_images/album_example.jpg', 'predicted_class': 'vinyl record', 'confidence': 99.99995231628418}, {'path': 'test_images/book1.jpg', 'predicted_class': 'vinyl record', 'confidence': 89.26637172698975}, {'path': 'test_images/book_example.jpg', 'predicted_class': 'uncertain', 'confidence': 61.61568760871887}]
+

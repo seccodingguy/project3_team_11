@@ -103,8 +103,8 @@ def send_status_message(msg,reciever='status_message'):
     if socket_io and socket_io.connected:
         socket_io.emit(reciever, {'message': msg})
         time.sleep(1)
-    else:
-        print("SocketIO client is not connected. Cannot send message.")
+    #else:
+    #    print("SocketIO client is not connected. Cannot send message.")
 
 # Fix for libdevice not found error and setup GPU with shared memory
 def setup_gpu():
@@ -1436,7 +1436,7 @@ if __name__ == "__main__":
     try:
         socket_io.connect('http://127.0.0.1:5000')  # Replace with your server's address
     except socketio.exceptions.ConnectionError as e:
-        print(f"Failed to connect to the server in mobilenet_resnet_keras: {e}")
+        # print(f"Failed to connect to the server in mobilenet_resnet_keras: {e}")
         socket_io = None  # Ensure socket_io is None if connection fails
     
     # Check if model exists, if not, train a new one

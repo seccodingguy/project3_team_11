@@ -44,7 +44,7 @@ class Orchestrator:
             socket_io.emit('agent_status', {'message': "Pipeline execution started."})
             time.sleep(1)
         except Exception as e:
-            print(f"Failed to connect to the server: {e}")
+        #    print(f"Failed to connect to the server: {e}")
             socket_io = None  # Ensure socket_io is None if connection fails
 
         agents_obj = agents()

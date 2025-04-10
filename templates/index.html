@@ -255,6 +255,13 @@
                         <option value="False" selected>False</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="use_xla">Use XLA:</label>
+                    <select id="use_xla" name="use_saved_model">
+                        <option value="True" selected>True</option>
+                        <option value="False">False</option>
+                    </select>
+                </div>
 
                 <!-- Directory Configuration -->
                 <div class="form-group">
@@ -466,7 +473,8 @@
                 const testDir = document.getElementById('test_dir').value.trim();
                 //const inventoryDir = document.getElementById('inventory_dir').value.trim();
                 
-                const savedModel = document.getElementById('use_saved_model').value.trim(); 
+                const savedModel = document.getElementById('use_saved_model').value.trim();
+                const useXLA = document.getElementById('use_xla').value.trim(); 
                 const downloadImages = document.getElementById('download_images').checked;
                 const validateImages = document.getElementById('validate_images').checked;
                 const trainImages = document.getElementById('train_model').checked;
@@ -499,6 +507,7 @@
                         'validate_images': validateImages,
                         'train_model': trainImages,
                         'predict_images': predictImages,
+                        'use_xla' : useXLA
                         //'create_inventory': createInventory 
                     }
                     

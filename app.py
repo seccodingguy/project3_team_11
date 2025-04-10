@@ -149,6 +149,7 @@ def submit():
             'validate_images': str(data.get('validate_images')) == 'True',
             'train_model': str(data.get('train_model')) == 'True',
             'predict_images': str(data.get('predict_images')) == 'True',
+            'use_xla': str(data.get('use_xls')) == 'True'
             #'create_inventory': str(data.get('create_inventory')) == 'True'
         }
         orchestrator = Orchestrator(orchestrator_config)

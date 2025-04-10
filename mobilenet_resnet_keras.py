@@ -431,6 +431,21 @@ def load_images_batch(img_paths, batch_size=16):
 
     return preprocessed_batch, valid_paths
 
+def get_images_to_predict(img_path):
+    
+    if not os.path.exists(img_path):
+            raise ValueError(f"Directory not found: {img_path}")
+        
+    # Get all image files
+    image_files = []
+    for filename in os.listdir(img_path):
+        if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp', '.gif')):
+            image_files.append(os.path.join(img_path, filename))
+            
+    return image_files
+
+    
+
 # Optimized function to preprocess a single image using GPU
 def preprocess_image(img_path):
     """Process a single image with GPU optimization and shared memory"""
@@ -599,7 +614,55 @@ def validate_images(directory, batch_size):
 # Optimize the model prediction function with XLA compilation
 @tf.function(jit_compile=True)  # Enable XLA optimization for shared memory
 def predict_optimized(model, img_array):
-    """GPU-optimized prediction using XLA and shared memory"""
+    """GPU-optimized prediction using XLA and shared memory
+    
+    Optimized prediction function that handles shape issues.
+    
+    Args:
+        model: The model to use for prediction
+        img_array: Input image tensor
+        
+    Returns:
+        Model prediction result
+    """
+    # Use TensorFlow operations to check and fix the shape
+    rank = tf.rank(img_array)
+    
+    # Handle different rank cases
+    def handle_rank_5():
+        # Reshape from (1, 3, 224, 224, 3) to (3, 224, 224, 3)
+        return tf.reshape(img_array, [-1, 224, 224, 3])
+    
+    def handle_rank_4():
+        # For rank 4, check if it already has the right shape
+        # If shape is (1, 3, 224, 224), we need to reshape
+        shape = tf.shape(img_array)
+        
+        def reshape_needed():
+            return tf.reshape(img_array, [-1, 224, 224, 3])
+        
+        def no_reshape():
+            return img_array
+        
+        # Check if height is 224 (index 1 for a (batch, height, width, channel) tensor)
+        return tf.cond(
+            tf.equal(shape[1], 224),
+            no_reshape,
+            reshape_needed
+        )
+    
+    def handle_other_ranks():
+        # For other ranks, just return as is and let the model handle it
+        return img_array
+    
+    # Use tf.case instead of Python if/else
+    img_array = tf.case(
+        [(tf.equal(rank, 5), handle_rank_5),
+         (tf.equal(rank, 4), handle_rank_4)],
+        default=handle_other_ranks
+    )
+    
+    # Make prediction
     return model(img_array, training=False)
 
 
@@ -1220,6 +1283,23 @@ class PreprocessingLayer(Layer):
         # Add your preprocessing logic here
         return inputs
 
+# First, check model requirements
+def check_model_input_requirements(model):
+    try:
+        input_shape = model.input_shape
+        input_dtype = model.input.dtype
+        
+        print(f"Model expects input shape: {input_shape}")
+        print(f"Model expects input dtype: {input_dtype}")
+        
+        return {
+            "input_shape": input_shape,
+            "input_dtype": input_dtype
+        }
+    except Exception as e:
+        print(f"Error checking model requirements: {e}")
+        return None
+
 def predict_image(model, image_path, class_names = ['book','vinyl'], use_xla=True, confidence_threshold=0.7):
     """
     Predicts the class of an image using the trained model.
@@ -1485,19 +1565,27 @@ if __name__ == "__main__":
             print(msg)
             send_status_message(msg)
         
-        #files = [os.path.join(train_dir, f) for f in os.listdir(train_dir) if os.path.isfile(os.path.join(train_dir, f)) and
-        #            f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff'))]
+        files = [os.path.join(train_dir, f) for f in os.listdir(train_dir) if os.path.isfile(os.path.join(train_dir, f)) and
+                    f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff'))]
+        predictions = []
         
-        #print(f"Files list: {files}")
-        
-        #prediction_results = predict_batch(model, files, confidence_threshold=confidence,batch_size=optimal_batch_size)
-        prediction_results, confidence_results = predict_image(model,train_dir,use_xla=use_xla,confidence_threshold=confidence)
+        if use_xla:
+            predictions = predict_batch(model, files, confidence_threshold=confidence,batch_size=optimal_batch_size)
+        else:
+            for img in files:
+                results, confidence = predict_image(model,img,use_xla=use_xla,confidence_threshold=confidence)
+                predictions.append({
+                'path': os.path.basename(img),
+                'predicted_class': results,
+                'confidence': confidence
+            })
+                
         send_status_message("*** PREDICTION RESULTS ***",reciever='results_status')
-        send_status_message(json.dumps(prediction_results),reciever='results_status')
-        send_status_message(json.dumps(confidence_results),reciever='results_status')
+        send_status_message(json.dumps(predictions),reciever='results_status')
+        
         print("*** PREDICTION RESULTS ***")
-        print(prediction_results)
-        print(confidence_results)
+        print(predictions)
+        
     else:
         print("Training new model with 2 classes (book, vinyl)...")
         # Check if we have data in all required folders

@@ -11,7 +11,7 @@ orchestrator_config = {
 'layers':15,
 'download_images':False,
 'validate_images':False,
-'train_model':True,
+'train_model':False,
 'predict_images':True,
 'confidence' : 0.7,
 'folds':12,

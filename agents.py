@@ -50,7 +50,7 @@ class Agents:
             training_process = subprocess.run(
                 ["python", "mobilenet_resnet_keras.py", '--dir_data', train_dir, '--model', model_name, 
                  '--folds', str(folds),'--layers',str(layers),'--epocs',str(epocs),
-                 '--confidence',str(confidence), '--use_xla',str(use_xla)]
+                 '--confidence',str(confidence), '--use_xla',str(use_xla), '--socketio',socketio]
             )
             # Wait for the process to complete
             #stdout, stderr = training_process.communicate()
@@ -68,7 +68,8 @@ class Agents:
         try:
             predict_process = subprocess.run(
                 ["python", "mobilenet_resnet_keras.py", '--dir_data', image_dir, '--model', model_name, 
-                 '--use_saved_model', str(True), '--confidence', str(confidence), '--use_xla',str(use_xla)]
+                 '--use_saved_model', str(True), '--confidence', str(confidence), '--use_xla',str(use_xla), 
+                 '--socketio',socketio]
             )
             # Wait for the process to complete
             # stdout, stderr = predict_process.communicate()

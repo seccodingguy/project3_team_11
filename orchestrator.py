@@ -29,6 +29,7 @@ class Orchestrator:
         self._folds = config_settings['folds']
         self._epocs = config_settings['epocs']
         self._use_xla = bool(config_settings['use_xla'])
+        self._socket_io = config_settings['socket_url']
         
            
     def orchestrate_pipeline(self):
@@ -41,7 +42,7 @@ class Orchestrator:
         socket_io = socketio.Client()
         
         try:
-            socket_io.connect('http://127.0.0.1:5000')
+            socket_io.connect(self._socket_io)
             socket_io.emit('agent_status', {'message': "Pipeline execution started."})
             time.sleep(1)
         except Exception as e:
@@ -73,14 +74,14 @@ class Orchestrator:
                 time.sleep(1)
             agents_obj.train_model(self._train_dir, self._model_to_use, 
                                folds=self._folds, layers=self._number_of_layers, epocs=self._epocs, 
-                               confidence=self._confidence,use_xla=self._use_xla)
+                               confidence=self._confidence,use_xla=self._use_xla,socketio=self._socket_io)
 
         if self._predict_images:
             # Step: Predict image classes
             if socket_io:
                 socket_io.emit('agent_status', {'message': "Step: Predict the images."})
                 time.sleep(1)
-            agents_obj.predict_images(self._predict_dir, self._model_to_use, confidence=self._confidence)
+            agents_obj.predict_images(self._predict_dir, self._model_to_use, confidence=self._confidence,socketio=self._socket_io)
 '''
 FUTURE RELEASE
 

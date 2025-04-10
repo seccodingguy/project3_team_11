@@ -1434,7 +1434,7 @@ if __name__ == "__main__":
     
     # Connect to the SocketIO server
     try:
-        socket_io.connect('http://127.0.0.1:5000')  # Replace with your server's address
+        socket_io.connect(args.socketio)  
     except socketio.exceptions.ConnectionError as e:
         # print(f"Failed to connect to the server in mobilenet_resnet_keras: {e}")
         socket_io = None  # Ensure socket_io is None if connection fails

@@ -149,7 +149,8 @@ def submit():
             'validate_images': str(data.get('validate_images')) == 'True',
             'train_model': str(data.get('train_model')) == 'True',
             'predict_images': str(data.get('predict_images')) == 'True',
-            'use_xla': str(data.get('use_xls')) == 'True'
+            'use_xla': str(data.get('use_xls')) == 'True',
+            'socket_url' : data.get('socket_url')
             #'create_inventory': str(data.get('create_inventory')) == 'True'
         }
         orchestrator = Orchestrator(orchestrator_config)
@@ -176,4 +177,4 @@ def handle_status_message(data):
 
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, host="0.0.0.0", debug=True)

@@ -218,6 +218,11 @@
                     <input type="text" id="validation_dir" name="validation_dir" value="data/validation">
                 </div>-->
 
+                <div class="form-group">
+                    <label for="predict_dir">Socket URL (URL and port of the Flask server):</label>
+                    <input type="text" id="socket_url" name="socket_url" value="http://127.0.0.1:5000">
+                </div>
+
                 <!-- Model Configuration -->
                 <div class="form-group">
                     <label for="model_dir">Model Directory:</label>
@@ -471,6 +476,7 @@
                 const folds = document.getElementById('folds').value.trim();
                 const epocs = document.getElementById('epocs').value.trim();
                 const testDir = document.getElementById('test_dir').value.trim();
+                const socketURL = document.getElementById('socket_url').value.trim();
                 //const inventoryDir = document.getElementById('inventory_dir').value.trim();
                 
                 const savedModel = document.getElementById('use_saved_model').value.trim();
@@ -507,9 +513,15 @@
                         'validate_images': validateImages,
                         'train_model': trainImages,
                         'predict_images': predictImages,
-                        'use_xla' : useXLA
+                        'use_xla' : useXLA,
+                        'socket_url' : socketURL
                         //'create_inventory': createInventory 
                     }
+
+                    var socket = io.connect(socketURL);
+                        socket.on('connect', () => {
+                        socket.send('User has connected!');
+                    });
                     
                     const response = await fetch('/submit', {
                         method: 'POST',
@@ -534,11 +546,13 @@
         });
 
         // Connect to the SocketIO server
-        const socket = io('http://127.0.0.1:5000', {
-            reconnection: true,
-            reconnectionAttempts: 5,
-            reconnectionDelay: 1000,
-        });
+        //const socket = io('http://127.0.0.1:5000', {
+        //    reconnection: true,
+        //    reconnectionAttempts: 5,
+        //    reconnectionDelay: 1000,
+        //});
+
+        
         
         // Listen for 'status_message' events
         socket.on('status_message', (data) => {

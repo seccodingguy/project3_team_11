@@ -12,6 +12,7 @@ models/
 *.keras
 *.h5
 *.tf
+/tmp
 
 # Distribution / packaging
 .Python

@@ -26,6 +26,28 @@ This repository provides a simple and efficient way to train and deploy image cl
 
 This repository provides a basic implementation of image classification using ResNet and MobileNet architectures. The code is designed to be easy to use and modify, making it a great starting point for your own image classification projects.
 
+## Key Features
+
+* Model Selection: The code allows users to choose between MobileNetV2 and ResNet50 as the base model.
+* Custom Preprocessing Layer: A custom preprocessing layer is implemented to handle image preprocessing for both MobileNetV2 and ResNet50.GPU 
+* Optimization: The code is optimized for GPU usage with shared memory optimization and auto-clustering enabled.
+* XLA Compilation: The code uses XLA (Accelerated Linear Algebra) compilation to optimize computations.
+* K-Fold Cross-Validation: The code implements K-Fold cross-validation to evaluate the model's performance. 
+* Data Augmentation: The code applies data augmentation techniques to the training data.
+* Model Evaluation: The code evaluates the model's performance using metrics such as accuracy, precision, and recall. 
+
+## Automated Performance and Benchmarking Features
+
+* GPU Performance Benchmarking: The code includes a benchmarking function to measure the performance of the GPU with different batch sizes.
+* Batch Size Optimization: The code adjusts the batch size based on the GPU's performance to optimize shared memory utilization. 
+* Speedup Calculation: The code calculates the speedup achieved by using batch processing with different batch sizes.
+* Custom Preprocessing Layer: A custom preprocessing layer to handle image preprocessing
+* Global Average Pooling Layer: A global average pooling layer to reduce the spatial dimensions of the feature maps
+* Dense Layers: One or more dense layers with ReLU activation and dropout
+* Final Classification Layer: A final classification layer with softmax activation
+
+![alt text](image-1.png)
+
 ## Requirements
 
 - **Python** 3.8+
@@ -37,8 +59,9 @@ This repository provides a basic implementation of image classification using Re
 - **Flask**
 - **DuckDuckGo Search**
 
-You can install the required packages using pip (after you clone the repository):
+You can install the required packages using conda or pip, or both (after you clone the repository):
 
+conda create --name <env> --file package-list.txt
 
 pip install -r requirements.txt
 
@@ -48,8 +71,11 @@ pip install -r requirements.txt
 
 git clone https://github.com/your-username/image-classification.git
 Install the required packages:
-
  
+conda [create --name <env>] --file package-list.txt
+
+and/or
+
 pip install -r requirements.txt
 
 ### Prepare your dataset: 

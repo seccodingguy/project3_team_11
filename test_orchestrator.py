@@ -17,7 +17,8 @@ orchestrator_config = {
 'folds':12,
 'epocs':100,
 'use_saved_model':False,
-'predict_dir':'test_images'
+'predict_dir':'test_images',
+'use_xla':False
 }
 
 orchestrator_obj = Orchestrator(orchestrator_config)

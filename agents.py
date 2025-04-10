@@ -61,7 +61,7 @@ class Agents:
             msg=f"Agent 3: Error training model: {e}"
             print(msg)
             
-    def predict_images(self,image_dir, model_name, confidence, socketio='http://127.0.0.1:5000',use_xla):
+    def predict_images(self,image_dir, model_name, confidence, socketio='http://127.0.0.1:5000',use_xla=True):
         msg=f"Agent 4: Predicting images in directory '{image_dir}' using model '{model_name}'..."
         print(msg)
         

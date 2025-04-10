@@ -518,8 +518,7 @@
                         //'create_inventory': createInventory 
                     }
 
-                    var socket = io.connect(socketURL);
-                        socket.on('connect', () => {
+                    socket.on('connect', () => {
                         socket.send('User has connected!');
                     });
                     
@@ -546,11 +545,11 @@
         });
 
         // Connect to the SocketIO server
-        //const socket = io('http://127.0.0.1:5000', {
-        //    reconnection: true,
-        //    reconnectionAttempts: 5,
-        //    reconnectionDelay: 1000,
-        //});
+        const socket = io('http://127.0.0.1:5000', {
+           reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+        });
 
         
         

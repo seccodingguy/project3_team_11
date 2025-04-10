@@ -18,7 +18,8 @@ orchestrator_config = {
 'epocs':100,
 'use_saved_model':False,
 'predict_dir':'test_images',
-'use_xla':False
+'use_xla':True,
+'socket_url': 'http://127.0.0.1:5000'
 }
 
 orchestrator_obj = Orchestrator(orchestrator_config)
